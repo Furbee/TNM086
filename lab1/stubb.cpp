@@ -58,16 +58,19 @@ int main(int argc, char *argv[]){
     const float dimX = 200;
     const float dimY = 200;
 
-    // create ground
-    osg::ref_ptr<osg::HeightField> ground = new osg::HeightField();
-    ground->allocate(dimX, dimY);
-    ground->setXInterval(1.0f);
-    ground->setYInterval(1.0f);
-    ground->setOrigin(osg::Vec3(-50.0f, -50.0f, 0.0f));
+    // define ground
+    osg::ref_ptr<osg::HeightField> field = new osg::HeightField();
 
-    for(int i = 0; i < dimX; i++) {
-        for (int j = 0; j < dimY; j++) {
-            ground->setHeight(i, j, cos(i/2) + sin(j/2));
+    //allocate
+    field->allocate(dimX, dimY);
+    field->setXInterval(1.0f);
+    field->setYInterval(1.0f);
+    field->setOrigin( osg::Vec3( -(dimX / 2), -(dimY / 2) , 0.0f) );
+
+    //set the Height at each point
+    for(int r = 0; r < field->getNumRows(); r++) {
+        for (int c = 0; c < field->getNumColumns(); c++) {
+            field->setHeight(r, c, cos(r/2) + sin(c/2));
         }
     }
 
@@ -75,9 +78,23 @@ int main(int argc, char *argv[]){
     // add the ground to the scene
     osg::ref_ptr<osg::Geode> groundGeode = new osg::Geode();
 
-    groundGeode->addDrawable(new osg::ShapeDrawable(ground));
+    groundGeode->addDrawable(new osg::ShapeDrawable(field));
 
     root->addChild(groundGeode);
+
+
+    //define model
+    osg::ref_ptr<osg::Node> gliderNode = osgDB::readNodeFile("/Users/VikH/Documents/Skola/TNM086/TNM086/lab1/glider.osg");
+
+    osg::ref_ptr<osg::PositionAttitudeTransform> gliderTransform = new osg::PositionAttitudeTransform();
+    gliderTransform->addChild(gliderNode);
+    gliderTransform->setPosition( osg::Vec3( (dimX/5),(dimY/5), 25) );
+    gliderTransform->setScale( osg::Vec3(10,10,10) );
+    root->addChild(gliderTransform);
+
+
+
+
 
 
     //Optimizes the scene-graph
