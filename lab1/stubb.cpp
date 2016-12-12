@@ -1,24 +1,15 @@
 #include <osg/Version>
-
-#include <osgViewer/Viewer>
-#include <osgUtil/Optimizer>
-
-#include <osg/ShapeDrawable>
-#include <osg/Geometry>
-#include <osg/Material>
-#include <osg/StateSet>
-#include <osgDB/ReadFile>
-#include <osg/Vec3>
-#include <osg/Vec4>
 #include <osg/Node>
+#include <osgDB/ReadFile>
 #include <osg/PositionAttitudeTransform>
-#include <osg/Light>
-#include <osg/LightSource>
-#include <osg/AnimationPath>
 #include <osg/MatrixTransform>
-#include <osg/LOD>
+#include <osgViewer/Viewer>
 #include <osgUtil/Simplifier>
-
+#include <osgUtil/Optimizer>
+#include <osg/ShapeDrawable>
+#include <osg/CopyOp>
+#include <osgUtil/IntersectVisitor>
+#include <osg/AnimationPath>
 
 int main(int argc, char *argv[]){
 
@@ -55,10 +46,19 @@ int main(int argc, char *argv[]){
 
     // Add your stuff to the root node here...
 
-    const float dimX = 200;
-    const float dimY = 200;
+    //set dim of ground plane
+    const float dimX = 256;
+    const float dimY = 256;
 
-    // define ground
+    //set ground texture
+    osg::ref_ptr<osg::Texture2D> groundTexture = new osg::Texture2D(osgDB::readImageFile("ground.png"));
+
+    //wrapping of texture
+    groundTexture->setWrap(osg::Texture::WRAP_S, osg::Texture::REPEAT);
+    groundTexture->setWrap(osg::Texture::WRAP_R, osg::Texture::REPEAT);
+
+
+    //define ground
     osg::ref_ptr<osg::HeightField> field = new osg::HeightField();
 
     //allocate
@@ -75,26 +75,49 @@ int main(int argc, char *argv[]){
     }
 
 
-    // add the ground to the scene
+    //add ground with texture to scene
     osg::ref_ptr<osg::Geode> groundGeode = new osg::Geode();
-
     groundGeode->addDrawable(new osg::ShapeDrawable(field));
+    groundGeode->getOrCreateStateSet()->setTextureAttributeAndModes(0, groundTexture);
 
     root->addChild(groundGeode);
 
 
     //define model
-    osg::ref_ptr<osg::Node> gliderNode = osgDB::readNodeFile("/Users/VikH/Documents/Skola/TNM086/TNM086/lab1/glider.osg");
-
-    osg::ref_ptr<osg::PositionAttitudeTransform> gliderTransform = new osg::PositionAttitudeTransform();
-    gliderTransform->addChild(gliderNode);
-    gliderTransform->setPosition( osg::Vec3( (dimX/5),(dimY/5), 25) );
-    gliderTransform->setScale( osg::Vec3(10,10,10) );
-    root->addChild(gliderTransform);
+    osg::ref_ptr<osg::Node> gliderNode = osgDB::readNodeFile("cessna.osg");
+    osg::ref_ptr<osg::PositionAttitudeTransform> gliderNodeTransform =
+            new osg::PositionAttitudeTransform();
+    gliderNodeTransform->addChild(gliderNode);
+    gliderNodeTransform->setScale(osg::Vec3(15,15,15));
 
 
+    //set animation path
+    osg::ref_ptr<osg::AnimationPath> gliderPath = new osg::AnimationPath();
+    osg::AnimationPath::ControlPoint p1(
+            osg::Vec3(128 * 5,128 * 5,764));
+    p1.setScale(osg::Vec3(15,15,15));
+    osg::AnimationPath::ControlPoint p2(
+            osg::Vec3(0,128 * 2,164));
+    p2.setScale(osg::Vec3(15,15,15));
+
+    gliderPath->insert(0.0f,p1);
+    gliderPath->insert(0.0f,p2);
+    gliderPath->setLoopMode(osg::AnimationPath::SWING);
+    osg::ref_ptr<osg::AnimationPathCallback> glidercb =
+            new osg::AnimationPathCallback(gliderPath);
+    gliderNodeTransform->setUpdateCallback(glidercb);
 
 
+    //add to root
+    root->addChild(gliderNodeTransform);
+
+
+    //Add light to scene
+    osg::ref_ptr<osg::LightSource> lightSource = new osg::LightSource();
+    osg::ref_ptr<osg::Light> light = new osg::Light();
+    light->setLightNum(0);
+    light->setPosition(osg::Vec4(128 * 5, 128 * 5, 500.0, 1.0));
+    light->setDiffuse(osg::Vec4(2.0, 0.0, 0.0, 1.0));
 
 
     //Optimizes the scene-graph
