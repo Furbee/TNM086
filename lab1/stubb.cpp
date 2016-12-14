@@ -70,7 +70,7 @@ int main(int argc, char *argv[]){
     //set the Height at each point
     for(int r = 0; r < field->getNumRows(); r++) {
         for (int c = 0; c < field->getNumColumns(); c++) {
-            field->setHeight(r, c, cos(r/2) + sin(c/2));
+            field->setHeight(r, c, cos(r/8) + sin(c/8));
         }
     }
 
@@ -88,7 +88,7 @@ int main(int argc, char *argv[]){
     osg::ref_ptr<osg::PositionAttitudeTransform> gliderNodeTransform =
             new osg::PositionAttitudeTransform();
     gliderNodeTransform->addChild(gliderNode);
-    gliderNodeTransform->setScale(osg::Vec3(15,15,15));
+    gliderNodeTransform->setScale(osg::Vec3(1,1,1));
 
 
     //set animation path
