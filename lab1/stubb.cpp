@@ -11,6 +11,7 @@
 #include <osgUtil/IntersectVisitor>
 #include <osg/AnimationPath>
 
+
 int main(int argc, char *argv[]){
 
     osg::ref_ptr<osg::Group> root = new osg::Group;
@@ -94,11 +95,11 @@ int main(int argc, char *argv[]){
     //set animation path
     osg::ref_ptr<osg::AnimationPath> gliderPath = new osg::AnimationPath();
     osg::AnimationPath::ControlPoint p1(
-            osg::Vec3(128 * 5,128 * 5,764));
-    p1.setScale(osg::Vec3(15,15,15));
+            osg::Vec3(1 ,1 ,1));
+    p1.setScale(osg::Vec3(1,1,1));
     osg::AnimationPath::ControlPoint p2(
-            osg::Vec3(0,128 * 2,164));
-    p2.setScale(osg::Vec3(15,15,15));
+            osg::Vec3(0,20 * 2,20));
+    p2.setScale(osg::Vec3(1,1,1));
 
     gliderPath->insert(0.0f,p1);
     gliderPath->insert(0.0f,p2);
@@ -116,8 +117,10 @@ int main(int argc, char *argv[]){
     osg::ref_ptr<osg::LightSource> lightSource = new osg::LightSource();
     osg::ref_ptr<osg::Light> light = new osg::Light();
     light->setLightNum(0);
-    light->setPosition(osg::Vec4(128 * 5, 128 * 5, 500.0, 1.0));
-    light->setDiffuse(osg::Vec4(2.0, 0.0, 0.0, 1.0));
+    light->setPosition(osg::Vec4(45, 45, 45, 1.0));
+    light->setDiffuse(osg::Vec4(1, 0.9, 0.9, 1.0));
+    lightSource->setLight(light);
+    root->addChild(lightSource);
 
 
     //Optimizes the scene-graph
