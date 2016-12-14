@@ -1,6 +1,7 @@
 #include <osg/Version>
 #include <iostream>
 #include <osg/Node>
+#include <iostream>
 #include <osgDB/ReadFile>
 #include <osg/PositionAttitudeTransform>
 #include <osg/MatrixTransform>
@@ -89,6 +90,7 @@ int main(int argc, char *argv[]){
     groundGeode->addDrawable(new osg::ShapeDrawable(field));
     groundGeode->getOrCreateStateSet()->setTextureAttributeAndModes(0, groundTexture);
 
+    //add to root
     root->addChild(groundGeode);
 
 
@@ -111,7 +113,7 @@ int main(int argc, char *argv[]){
 
     gliderPath->insert(0.0f,p1);
     gliderPath->insert(0.0f,p2);
-    gliderPath->setLoopMode(osg::AnimationPath::SWING);
+    gliderPath->setLoopMode(osg::AnimationPath::LOOP);
     osg::ref_ptr<osg::AnimationPathCallback> glidercb =
             new osg::AnimationPathCallback(gliderPath);
     gliderNodeTransform->setUpdateCallback(glidercb);
@@ -126,9 +128,26 @@ int main(int argc, char *argv[]){
     osg::ref_ptr<osg::Light> light = new osg::Light();
     light->setLightNum(0);
     light->setPosition(osg::Vec4(45, 45, 45, 1.0));
-    light->setDiffuse(osg::Vec4(1, 0.9, 0.9, 1.0));
+    light->setDiffuse(osg::Vec4(1.0, 0, 0, 1.0));
+    //light->setAmbient(osg::Vec4(0.3, 0.3f, 0.3f, 1.0));
     lightSource->setLight(light);
+
+    //add to root
     root->addChild(lightSource);
+
+
+
+    //Add light 2 to scene
+    osg::ref_ptr<osg::LightSource> lightSource2 = new osg::LightSource();
+    osg::ref_ptr<osg::Light> light2 = new osg::Light();
+    light2->setLightNum(0);
+    light2->setPosition(osg::Vec4(200, 200, 200, 1.0));
+    light2->setDiffuse(osg::Vec4(1.0, 0.9f, 0.9f, 1.0));
+    //light2->setAmbient(osg::Vec4(0.3, 0.3f, 0.3f, 1.0));
+    lightSource2->setLight(light2);
+
+    //add to root
+    root->addChild(lightSource2);
 
 
     //Optimizes the scene-graph
