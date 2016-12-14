@@ -1,4 +1,5 @@
 #include <osg/Version>
+#include <iostream>
 #include <osg/Node>
 #include <osgDB/ReadFile>
 #include <osg/PositionAttitudeTransform>
@@ -54,6 +55,9 @@ int main(int argc, char *argv[]){
     //set ground texture
     osg::ref_ptr<osg::Texture2D> groundTexture = new osg::Texture2D(osgDB::readImageFile("ground.png"));
 
+    //read height map file
+    osg::ref_ptr<osg::Image> heightMap = osgDB::readImageFile("heightmap_256sqr.jpg");
+
     //wrapping of texture
     groundTexture->setWrap(osg::Texture::WRAP_S, osg::Texture::REPEAT);
     groundTexture->setWrap(osg::Texture::WRAP_R, osg::Texture::REPEAT);
@@ -69,9 +73,13 @@ int main(int argc, char *argv[]){
     field->setOrigin( osg::Vec3( -(dimX / 2), -(dimY / 2) , 0.0f) );
 
     //set the Height at each point
-    for(int r = 0; r < field->getNumRows(); r++) {
-        for (int c = 0; c < field->getNumColumns(); c++) {
-            field->setHeight(r, c, cos(r/8) + sin(c/8));
+    for(unsigned int r = 0; r < field->getNumRows(); r++) {
+        for (unsigned int c = 0; c < field->getNumColumns(); c++) {
+
+            //std::cout << "Column: " << c << " Row: " << r << " Value: " << ( (float)*heightMap-> data( c, r ) / 255 ) <<std:: endl;
+            //field->setHeight(r, c, cos(r/8) + sin(c/8));
+            float heightMapVal = ( (float)*heightMap-> data( c, r )/ 20 );
+            field->setHeight( c,r, heightMapVal);
         }
     }
 
