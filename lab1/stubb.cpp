@@ -56,7 +56,7 @@ int main(int argc, char *argv[]){
     osg::ref_ptr<osg::Texture2D> groundTexture = new osg::Texture2D(osgDB::readImageFile("ground.png"));
 
     //read height map file
-    osg::ref_ptr<osg::Image> heightMap = osgDB::readImageFile("heightmap_256sqr.jpg");
+    osg::ref_ptr<osg::Image> heightMap = osgDB::readImageFile("heightmap_256sqr3.jpg");
 
     //wrapping of texture
     groundTexture->setWrap(osg::Texture::WRAP_S, osg::Texture::REPEAT);
@@ -78,7 +78,7 @@ int main(int argc, char *argv[]){
 
             //std::cout << "Column: " << c << " Row: " << r << " Value: " << ( (float)*heightMap-> data( c, r ) / 255 ) <<std:: endl;
             //field->setHeight(r, c, cos(r/8) + sin(c/8));
-            float heightMapVal = ( (float)*heightMap-> data( c, r )/ 20 );
+            float heightMapVal = ( (float)*heightMap-> data( c, r )/ 12 );
             field->setHeight( c,r, heightMapVal);
         }
     }
