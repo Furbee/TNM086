@@ -50,11 +50,11 @@ int main(int argc, char *argv[]){
     // Add your stuff to the root node here...
 
     //set dim of ground plane
-    const float dimX = 256;
-    const float dimY = 256;
+    const int dimX = 256;
+    const int dimY = 256;
 
     //set ground texture
-    osg::ref_ptr<osg::Texture2D> groundTexture = new osg::Texture2D(osgDB::readImageFile("ground.png"));
+    osg::ref_ptr<osg::Texture2D> groundTexture = new osg::Texture2D(osgDB::readImageFile("heightmap_256sqr3.jpg"));
 
     //read height map file
     osg::ref_ptr<osg::Image> heightMap = osgDB::readImageFile("heightmap_256sqr3.jpg");
@@ -104,16 +104,28 @@ int main(int argc, char *argv[]){
 
     //set animation path
     osg::ref_ptr<osg::AnimationPath> gliderPath = new osg::AnimationPath();
+
     osg::AnimationPath::ControlPoint p1(
-            osg::Vec3(1 ,1 ,1));
+            osg::Vec3(50 ,50 , 50));
+
     p1.setScale(osg::Vec3(1,1,1));
+
     osg::AnimationPath::ControlPoint p2(
-            osg::Vec3(0,20 * 2,20));
+            osg::Vec3(50, 500, 50));
+
     p2.setScale(osg::Vec3(1,1,1));
 
+    osg::AnimationPath::ControlPoint p3(
+            osg::Vec3(50, -700 , 50));
+
+    p3.setScale(osg::Vec3(1,1,1));
+
+
     gliderPath->insert(0.0f,p1);
-    gliderPath->insert(0.0f,p2);
-    gliderPath->setLoopMode(osg::AnimationPath::LOOP);
+    gliderPath->insert(2.0f,p2);
+    gliderPath->insert(4.0f,p3);
+
+    gliderPath->setLoopMode(osg::AnimationPath::SWING);
     osg::ref_ptr<osg::AnimationPathCallback> glidercb =
             new osg::AnimationPathCallback(gliderPath);
     gliderNodeTransform->setUpdateCallback(glidercb);
