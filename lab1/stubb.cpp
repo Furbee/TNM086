@@ -11,6 +11,14 @@
 #include <osg/CopyOp>
 #include <osgUtil/IntersectVisitor>
 
+osg::AnimationPath::ControlPoint createPoint(osg::Vec3 position, osg::Vec3 scale);
+osg::ref_ptr<osg::Geode> createGround( int dimX, int dimY, float intervalX, float intervalY );
+osg::ref_ptr<osg::HeightField> createHeightField( int dimX, int dimY, float intervalX, float intervalY  );
+void setHeights ( osg::ref_ptr<osg::HeightField> field, osg::ref_ptr<osg::Image> heightMap );
+osg::ref_ptr<osg::Texture2D> addTexture();
+void addPathTo( osg::ref_ptr<osg::PositionAttitudeTransform> nodeTransform);
+void addPoints( osg::ref_ptr<osg::AnimationPath> path );
+
 
 int main(int argc, char *argv[]) {
 
@@ -43,47 +51,20 @@ int main(int argc, char *argv[]) {
 
     /// ---
 #endif
+    /***********************************************************************************************************
+     *                                     CODE
+     **********************************************************************************************************/
 
     //set dim of ground plane
-    const int dimX = 256;
-    const int dimY = 256;
+    const unsigned int DIMX = 256;
+    const unsigned int DIMY = 256;
+    //set intervals of ground plane
+    const float INTX = 1.0f;
+    const float INTY = 1.0f;
 
-    //set ground texture
-    osg::ref_ptr<osg::Texture2D> groundTexture = new osg::Texture2D(osgDB::readImageFile("heightmap_256sqr3.jpg"));
-
-    //read height map file
-    osg::ref_ptr<osg::Image> heightMap = osgDB::readImageFile("heightmap_256sqr3.jpg");
-
-    //wrapping of texture
-    groundTexture->setWrap(osg::Texture::WRAP_S, osg::Texture::REPEAT);
-    groundTexture->setWrap(osg::Texture::WRAP_R, osg::Texture::REPEAT);
-
-    //define ground
-    osg::ref_ptr<osg::HeightField> field = new osg::HeightField();
-
-    //allocate
-    field->allocate(dimX, dimY);
-    field->setXInterval(1.0f);
-    field->setYInterval(1.0f);
-    field->setOrigin(osg::Vec3(-(dimX / 2), -(dimY / 2), 0.0f));
-
-    //set the Height at each point
-    for (unsigned int r = 0; r < field->getNumRows(); r++) {
-        for (unsigned int c = 0; c < field->getNumColumns(); c++) {
-
-            //std::cout << "Column: " << c << " Row: " << r << " Value: " << ( (float)*heightMap-> data( c, r ) / 255 ) <<std:: endl;
-            //field->setHeight(r, c, cos(r/8) + sin(c/8));
-            float heightMapVal = ((float) *heightMap->data(c, r) / 12);
-            field->setHeight(c, r, heightMapVal);
-        }
-    }
-
-    //add ground with texture to scene
-    osg::ref_ptr<osg::Geode> groundGeode = new osg::Geode();
-    groundGeode->addDrawable(new osg::ShapeDrawable(field));
-    groundGeode->getOrCreateStateSet()->setTextureAttributeAndModes(0, groundTexture);
-    //add to root
-    root->addChild(groundGeode);
+    //create ground plane
+    osg::ref_ptr<osg::Geode> groundGeode = createGround( DIMX, DIMY, INTX, INTY ); //create the ground
+    root->addChild(groundGeode); //add ground to root
 
     //define model
     osg::ref_ptr<osg::Node> gliderNode = osgDB::readNodeFile("cessna.osg");
@@ -92,23 +73,7 @@ int main(int argc, char *argv[]) {
     gliderNodeTransform->addChild(gliderNode);
     gliderNodeTransform->setScale(osg::Vec3(5, 5, 5));
 
-
-    //set animation path
-    osg::ref_ptr<osg::AnimationPath> gliderPath = new osg::AnimationPath();
-    osg::AnimationPath::ControlPoint p1(
-            osg::Vec3(50, 50, 50));
-    p1.setScale(osg::Vec3(1, 1, 1));
-    osg::AnimationPath::ControlPoint p2(
-            osg::Vec3(50, 500, 50));
-    p2.setScale(osg::Vec3(1, 1, 1));
-
-    gliderPath->insert(0.0f, p1);
-    gliderPath->insert(3.0f, p2);
-
-    gliderPath->setLoopMode(osg::AnimationPath::SWING);
-    osg::ref_ptr<osg::AnimationPathCallback> glidercb =
-            new osg::AnimationPathCallback(gliderPath);
-    gliderNodeTransform->setUpdateCallback(glidercb);
+    addPathTo(gliderNodeTransform);
     //add to root
     root->addChild(gliderNodeTransform);
 
@@ -138,7 +103,7 @@ int main(int argc, char *argv[]) {
             new osg::PositionAttitudeTransform();
 
     dumpTruckTransform->addChild(dumpTruckLOD);
-    dumpTruckTransform->setPosition(osg::Vec3(40,1,20));
+    dumpTruckTransform->setPosition(osg::Vec3(-50,5,20));
     dumpTruckTransform->setScale(osg::Vec3(1.5,1.5,1.5));
     //add to root
     root->addChild(dumpTruckTransform);
@@ -183,4 +148,105 @@ int main(int argc, char *argv[]) {
     viewer.setCamera(camera);
 
     return viewer.run();
+}
+
+/***********************************************************************************************************
+*                                     SUPPORT FUNCTIONS
+**********************************************************************************************************/
+
+
+osg::ref_ptr<osg::Geode> createGround(int dimX, int dimY, float intervalX, float intervalY) {
+    //create field
+    osg::ref_ptr<osg::HeightField> field = createHeightField( dimX, dimY, intervalX, intervalY );
+
+    //add texture to field
+    osg::ref_ptr<osg::Texture2D> groundTexture = addTexture();
+
+    //add ground with texture to scene
+    osg::ref_ptr<osg::Geode> groundGeode = new osg::Geode();
+    groundGeode->addDrawable(new osg::ShapeDrawable(field));
+    groundGeode->getOrCreateStateSet()->setTextureAttributeAndModes(0, groundTexture);
+
+    return groundGeode;
+
+}
+
+osg::ref_ptr<osg::HeightField> createHeightField( int dimX, int dimY, float intervalX, float intervalY ) {
+    //read height map file
+    osg::ref_ptr<osg::Image> heightMap = osgDB::readImageFile("heightmap_256sqr3.jpg");
+
+    //define ground
+    osg::ref_ptr<osg::HeightField> field = new osg::HeightField();
+
+    //allocate
+    field->allocate( dimX, dimY );
+    field->setXInterval( intervalX );
+    field->setYInterval( intervalY );
+    field->setOrigin(osg::Vec3(-(dimX / 2), -(dimY / 2), 0.0f));
+
+    setHeights(field, heightMap);
+
+    return field;
+}
+
+
+osg::ref_ptr<osg::Texture2D> addTexture(){
+
+    //set ground texture
+    osg::ref_ptr<osg::Texture2D> groundTexture  = new osg::Texture2D(osgDB::readImageFile("ground.png"));
+
+//wrapping of texture
+    groundTexture->setWrap(osg::Texture::WRAP_S, osg::Texture::REPEAT);
+    groundTexture->setWrap(osg::Texture::WRAP_R, osg::Texture::REPEAT);
+
+    return groundTexture;
+
+}
+
+
+void setHeights ( osg::ref_ptr<osg::HeightField> field, osg::ref_ptr<osg::Image> heightMap ){
+    //set the Height at each point
+    for (unsigned int r = 0; r < field->getNumRows(); r++) {
+        for (unsigned int c = 0; c < field->getNumColumns(); c++) {
+            float heightMapVal = ((float) *heightMap->data(c, r) / 12);
+            field->setHeight(c, r, heightMapVal);
+        }
+    }
+}
+
+void addPathTo( osg::ref_ptr<osg::PositionAttitudeTransform> nodeTransform) {
+
+    //set animation path
+    osg::ref_ptr<osg::AnimationPath> gliderPath = new osg::AnimationPath();
+
+    //add some points
+    addPoints(gliderPath);
+
+    //set loop-mode
+    gliderPath->setLoopMode(osg::AnimationPath::LOOP);
+
+    osg::ref_ptr<osg::AnimationPathCallback> glidercb =
+            new osg::AnimationPathCallback(gliderPath);
+
+    nodeTransform->setUpdateCallback(glidercb);
+}
+
+void addPoints( osg::ref_ptr<osg::AnimationPath> path ){
+
+    //create four points for the path
+    osg::AnimationPath::ControlPoint p1( osg::Vec3(-50, 250, 150) );
+    p1.setScale(osg::Vec3(0.3, 0.3, 0.3));
+    path->insert(0.0f, p1);
+
+    osg::AnimationPath::ControlPoint p2( osg::Vec3(-50, 50, 50) );
+    p2.setScale(osg::Vec3(1, 1, 1));
+    path->insert(3.0f, p2);
+
+    osg::AnimationPath::ControlPoint p3( osg::Vec3(-50, -50, 50) );
+    p3.setScale(osg::Vec3(1, 1, 1));
+    path->insert(4.5f, p3);
+
+    osg::AnimationPath::ControlPoint p4( osg::Vec3(-50, -250, 150) );
+    p4.setScale(osg::Vec3(0.3, 0.3, 0.3));
+    path->insert(7.5f, p4);
 }
