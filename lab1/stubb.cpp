@@ -18,6 +18,7 @@ void setHeights ( osg::ref_ptr<osg::HeightField> field, osg::ref_ptr<osg::Image>
 osg::ref_ptr<osg::Texture2D> addTexture();
 void addPathTo( osg::ref_ptr<osg::PositionAttitudeTransform> nodeTransform);
 void addPoints( osg::ref_ptr<osg::AnimationPath> path );
+void addLight(osg::ref_ptr<osg::LightSource> lightSource, int lightNum, osg::Vec4 position, osg::Vec4 diffuse, osg::Vec4 ambient);
 
 
 int main(int argc, char *argv[]) {
@@ -111,25 +112,15 @@ int main(int argc, char *argv[]) {
 
     //Add light to scene
     osg::ref_ptr<osg::LightSource> lightSource = new osg::LightSource();
-    osg::ref_ptr<osg::Light> light = new osg::Light();
-    light->setLightNum(0);
-    light->setPosition(osg::Vec4(45, 45, 45, 1.0));
-    light->setDiffuse(osg::Vec4(1.0, 0, 0, 1.0));
-    light->setAmbient(osg::Vec4(0.03f, 0.03f, 0.03f, 1.0));
-    lightSource->setLight(light);
-    //add to root
-    root->addChild(lightSource);
+    addLight(lightSource, 0 , osg::Vec4(45, 45, 45, 1.0) , osg::Vec4(1.0, 0, 0, 1.0), osg::Vec4(0.03f, 0.03f, 0.03f, 1.0) );
+    root->addChild(lightSource); //add to root
 
     //Add light 2 to scene
     osg::ref_ptr<osg::LightSource> lightSource2 = new osg::LightSource();
-    osg::ref_ptr<osg::Light> light2 = new osg::Light();
-    light2->setLightNum(0);
-    light2->setPosition(osg::Vec4(200, 200, 200, 1.0));
-    light2->setDiffuse(osg::Vec4(1.0, 0.9f, 0.9f, 1.0));
-    //light2->setAmbient(osg::Vec4(0.3, 0.3f, 0.3f, 1.0));
-    lightSource2->setLight(light2);
-    //add to root
-    root->addChild(lightSource2);
+    addLight(lightSource2, 0 , osg::Vec4(200, 200, 200, 1.0) , osg::Vec4(1.0, 0.9f, 0.9f, 1.0), osg::Vec4(0, 0, 0, 0) );
+    root->addChild(lightSource2); //add too root
+
+
     
     //Optimizes the scene-graph
     osgUtil::Optimizer optimizer;
@@ -249,4 +240,16 @@ void addPoints( osg::ref_ptr<osg::AnimationPath> path ){
     osg::AnimationPath::ControlPoint p4( osg::Vec3(-50, -250, 150) );
     p4.setScale(osg::Vec3(0.3, 0.3, 0.3));
     path->insert(7.5f, p4);
+}
+
+void addLight(osg::ref_ptr<osg::LightSource> lightSource, int lightNum, osg::Vec4 position, osg::Vec4 diffuse, osg::Vec4 ambient) {
+
+    osg::ref_ptr<osg::Light> light = new osg::Light();
+
+    light->setLightNum( lightNum );
+    light->setPosition( position );
+    light->setDiffuse( diffuse );
+    light->setAmbient( ambient );
+
+    lightSource->setLight( light );
 }
