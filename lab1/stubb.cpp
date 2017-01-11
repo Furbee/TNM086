@@ -21,6 +21,33 @@ void addPoints( osg::ref_ptr<osg::AnimationPath> path );
 void addLight(osg::ref_ptr<osg::LightSource> lightSource, int lightNum, osg::Vec4 position, osg::Vec4 diffuse, osg::Vec4 ambient);
 
 
+
+
+
+
+
+class IntersectCallback : public osg::NodeCallback{
+public:
+    virtual void operator() (osg::ref_ptr<osg::Node> node, osg::ref_ptr<osg::NodeVisitor> nodeVisit ){
+        osg::ref_ptr<intersectRef> intersectRef =
+                dynamic_cast< osg::ref_ptr<intersectRef> > (node->getUserData());
+
+        osgUtil::IntersectionVisitor visit = intersectRef->getVisitor();
+        node->accept(visit);
+        osg::ref_ptr<osgUtil::Intersector> lineIntersector = visit.getIntersector();
+
+        if(lineIntersector->containsIntersections()){
+            intersectRef->getLight()->setDiffuse( osg::Vec4(1,1,1,1) );
+        }
+        else{
+            intersectRef->getLight()->setDiffuse( osg::Vec4 (1,0 ,0,1) );
+        }
+        lineIntersector->reset();
+        traverse(node, nodeVisit);
+    }
+};
+
+
 int main(int argc, char *argv[]) {
 
     osg::ref_ptr<osg::Group> root = new osg::Group;
