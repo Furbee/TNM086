@@ -20,10 +20,10 @@ void addPathTo( osg::ref_ptr<osg::PositionAttitudeTransform> nodeTransform);
 void addPoints( osg::ref_ptr<osg::AnimationPath> path );
 void addLight(osg::ref_ptr<osg::LightSource> lightSource, int lightNum, osg::Vec4 position, osg::Vec4 diffuse, osg::Vec4 ambient);
 
-class intersectRef : public osg::Referenced {
+class IntersectRef : public osg::Referenced {
 
 public:
-    intersectRef(osgUtil::IntersectionVisitor iv, osg::ref_ptr<osg::Light> light){
+    IntersectRef( osgUtil::IntersectionVisitor iv, osg::ref_ptr<osg::Light> light ){
         this->iv = iv;
     }
 
@@ -40,18 +40,13 @@ protected:
     osg::ref_ptr<osg::Light> light;
 };
 
-
-
-
-
-
-
-
-class IntersectCallback : public osg::NodeCallback{
+class IntersectCallback : public osg::NodeCallback
+{
 public:
-    virtual void operator() (osg::ref_ptr<osg::Node> node, osg::ref_ptr<osg::NodeVisitor> nodeVisit ){
-        osg::ref_ptr<intersectRef> intersectRef =
-                dynamic_cast< osg::ref_ptr<intersectRef> > (node->getUserData());
+    virtual void operator() ( osg::Node* node, osg::NodeVisitor* nodeVisit )
+    {
+        osg::ref_ptr<IntersectRef> intersectRef =
+                dynamic_cast<IntersectRef*>( node->getUserData() ) ;
 
         osgUtil::IntersectionVisitor visit = intersectRef->getVisitor();
         node->accept(visit);
