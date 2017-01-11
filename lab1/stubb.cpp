@@ -20,6 +20,27 @@ void addPathTo( osg::ref_ptr<osg::PositionAttitudeTransform> nodeTransform);
 void addPoints( osg::ref_ptr<osg::AnimationPath> path );
 void addLight(osg::ref_ptr<osg::LightSource> lightSource, int lightNum, osg::Vec4 position, osg::Vec4 diffuse, osg::Vec4 ambient);
 
+class intersectRef : public osg::Referenced {
+
+public:
+    intersectRef(osgUtil::IntersectionVisitor iv, osg::ref_ptr<osg::Light> light){
+        this->iv = iv;
+    }
+
+    osgUtil::IntersectionVisitor getVisitor() {
+        return this->iv;
+    }
+
+    osg::ref_ptr<osg::Light> getLight() {
+        return this->light;
+    }
+
+protected:
+    osgUtil::IntersectionVisitor iv;
+    osg::ref_ptr<osg::Light> light;
+};
+
+
 
 
 
@@ -148,7 +169,7 @@ int main(int argc, char *argv[]) {
     root->addChild(lightSource2); //add too root
 
 
-    
+
     //Optimizes the scene-graph
     osgUtil::Optimizer optimizer;
     optimizer.optimize(root);
