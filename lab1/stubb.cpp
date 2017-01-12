@@ -18,14 +18,21 @@ void setHeights ( osg::ref_ptr<osg::HeightField> field, osg::ref_ptr<osg::Image>
 osg::ref_ptr<osg::Texture2D> addTexture();
 void addPathTo( osg::ref_ptr<osg::PositionAttitudeTransform> nodeTransform);
 void addPoints( osg::ref_ptr<osg::AnimationPath> path );
-void addLight(osg::ref_ptr<osg::LightSource> lightSource, int lightNum, osg::Vec4 position, osg::Vec4 diffuse, osg::Vec4 ambient);
+void addLight(osg::ref_ptr<osg::LightSource> lightSource, int lightNum, osg::Vec4 position, osg::Vec4 diffuse, osg::Vec4 ambient, osg::StateSet *r_state);
+
+osg::ref_ptr<osg::LightSource> lightSource3 = new osg::LightSource();/*
 
 class IntersectRef : public osg::Referenced {
 
 public:
     IntersectRef( osgUtil::IntersectionVisitor iv, osg::ref_ptr<osg::Light> light ){
+
+        //iv.clone(this);
         this->iv = iv;
+
+        this->light = light;
     }
+
 
     osgUtil::IntersectionVisitor getVisitor() {
         return this->iv;
@@ -38,16 +45,32 @@ public:
 protected:
     osgUtil::IntersectionVisitor iv;
     osg::ref_ptr<osg::Light> light;
-};
+    osg::ref_ptr<osg::Group> root;
+};*/
 
 class IntersectCallback : public osg::NodeCallback
 {
 public:
     virtual void operator() ( osg::Node* node, osg::NodeVisitor* nodeVisit )
     {
-        osg::ref_ptr<IntersectRef> intersectRef =
-                dynamic_cast<IntersectRef*>( node->getUserData() ) ;
+        osg::Vec3 lineOne (-200, 0, 50);
+        osg::Vec3 lineTwo (200, 0, 50);
 
+        osg::ref_ptr<osgUtil::LineSegmentIntersector> lineIntersector =
+                new osgUtil::LineSegmentIntersector(lineOne, lineTwo);
+        osgUtil::IntersectionVisitor visitor( lineIntersector.get() );
+        node->accept( visitor );
+
+        if(lineIntersector->containsIntersections()){
+            lightSource3->getLight()->setDiffuse( osg::Vec4(1,0,0,1) );
+        }
+        else{
+            lightSource3->getLight()->setDiffuse( osg::Vec4 (0.3,0.15,0.15,1.0) );
+            lightSource3->getLight()->setAmbient( osg::Vec4 (0.02,0.15,0.15,1.0));
+        }
+
+        traverse(node, nodeVisit);
+        /*
         osgUtil::IntersectionVisitor visit = intersectRef->getVisitor();
         node->accept(visit);
         osg::ref_ptr<osgUtil::Intersector> lineIntersector = visit.getIntersector();
@@ -59,7 +82,7 @@ public:
             intersectRef->getLight()->setDiffuse( osg::Vec4 (1,0 ,0,1) );
         }
         lineIntersector->reset();
-        traverse(node, nodeVisit);
+        traverse(node, nodeVisit); */
     }
 };
 
@@ -71,8 +94,8 @@ int main(int argc, char *argv[]) {
 #if 1
     /// Line ---
 
-    osg::Vec3 line_p0(-1, 0, 0);
-    osg::Vec3 line_p1(1, 0, 0);
+    osg::Vec3 line_p0(-200, 0, 50);
+    osg::Vec3 line_p1(200, 0, 50);
 
     osg::ref_ptr<osg::Vec3Array> vertices = new osg::Vec3Array();
     vertices->push_back(line_p0);
@@ -92,6 +115,8 @@ int main(int argc, char *argv[]) {
     lineGeode->getOrCreateStateSet()->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
 
     root->addChild(lineGeode);
+
+    root->setUpdateCallback(new IntersectCallback);
 
     /// ---
 #endif
@@ -139,9 +164,9 @@ int main(int argc, char *argv[]) {
 
     osg::ref_ptr<osg::LOD> dumpTruckLOD = new osg::LOD();
     dumpTruckLOD->setRangeMode( osg::LOD::DISTANCE_FROM_EYE_POINT );
-    dumpTruckLOD->addChild(dumpTruck, 0,50);
-    dumpTruckLOD->addChild(dumpTruckLower, 51,60);
-    dumpTruckLOD->addChild(dumpTruckLowest,61,10000);
+    dumpTruckLOD->addChild(dumpTruck, 0,200);
+    dumpTruckLOD->addChild(dumpTruckLower, 201,500);
+    dumpTruckLOD->addChild(dumpTruckLowest,501,10000);
 
     osg::ref_ptr<osg::PositionAttitudeTransform> dumpTruckTransform =
             new osg::PositionAttitudeTransform();
@@ -153,17 +178,26 @@ int main(int argc, char *argv[]) {
     root->addChild(dumpTruckTransform);
 
 
+    osg::StateSet *root_state = root->getOrCreateStateSet();
+
     //Add light to scene
     osg::ref_ptr<osg::LightSource> lightSource = new osg::LightSource();
-    addLight(lightSource, 0 , osg::Vec4(45, 45, 45, 1.0) , osg::Vec4(1.0, 0, 0, 1.0), osg::Vec4(0.03f, 0.03f, 0.03f, 1.0) );
+    //addLight(lightSource, 0 , osg::Vec4(45, 45, 45, 1.0) , osg::Vec4(0, 0, 0, 0), osg::Vec4(0.0f, 0.9f, 0.0f, 1.0), root_state );
     root->addChild(lightSource); //add to root
+
+    //spotlight
+    osg::ref_ptr<osg::Light> light = new osg::Light();
+    light->setLightNum(0);
+
 
     //Add light 2 to scene
     osg::ref_ptr<osg::LightSource> lightSource2 = new osg::LightSource();
-    addLight(lightSource2, 0 , osg::Vec4(200, 200, 200, 1.0) , osg::Vec4(1.0, 0.9f, 0.9f, 1.0), osg::Vec4(0, 0, 0, 0) );
+    //addLight(lightSource2, 1 , osg::Vec4(200, 200, 200, 1.0) , osg::Vec4(0.0, 0, 0.2f, 1.0), osg::Vec4(0, 0, 0, 0), root_state );
     root->addChild(lightSource2); //add too root
 
-
+    //addLight(lightSource3, 0, osg::Vec4(0, 0, 0, 0), osg::Vec4(0.1, 0.1, 0.1, 1), osg::Vec4(0.5, 0.4, 0.4, 1.0) );
+    //lightSource->getLight()->setLightNum(2);
+    root->addChild(lightSource3);
 
     //Optimizes the scene-graph
     osgUtil::Optimizer optimizer;
@@ -285,9 +319,9 @@ void addPoints( osg::ref_ptr<osg::AnimationPath> path ){
     path->insert(7.5f, p4);
 }
 
-void addLight(osg::ref_ptr<osg::LightSource> lightSource, int lightNum, osg::Vec4 position, osg::Vec4 diffuse, osg::Vec4 ambient) {
+void addLight(osg::ref_ptr<osg::LightSource> lightSource, int lightNum, osg::Vec4 position, osg::Vec4 diffuse, osg::Vec4 ambient, osg::StateSet *r_state) {
 
-    osg::ref_ptr<osg::Light> light = new osg::Light();
+/*    osg::ref_ptr<osg::Light> light = new osg::Light();
 
     light->setLightNum( lightNum );
     light->setPosition( position );
@@ -295,4 +329,7 @@ void addLight(osg::ref_ptr<osg::LightSource> lightSource, int lightNum, osg::Vec
     light->setAmbient( ambient );
 
     lightSource->setLight( light );
+    lightSource->setLocalStateSetModes( osg::StateAttribute::ON );
+    lightSource->setStateSetModes( *r_state, osg::StateAttribute::ON );
+    */
 }
