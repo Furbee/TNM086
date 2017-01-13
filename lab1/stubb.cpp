@@ -62,11 +62,12 @@ public:
         node->accept( visitor );
 
         if(lineIntersector->containsIntersections()){
-            lightSource3->getLight()->setDiffuse( osg::Vec4(1,0,0,1) );
+            lightSource3->getLight()->setDiffuse( osg::Vec4(1.0f, 0.2f, 0.2f,1.0f) );
+            lightSource3->getLight()->setAmbient( osg::Vec4( 0.3f, 0.05f, 0.05f, 1.0f));
         }
         else{
-            lightSource3->getLight()->setDiffuse( osg::Vec4 (0.3,0.15,0.15,1.0) );
-            lightSource3->getLight()->setAmbient( osg::Vec4 (0.02,0.15,0.15,1.0));
+            lightSource3->getLight()->setDiffuse( osg::Vec4 (0,0,0,1.0) );
+            lightSource3->getLight()->setAmbient( osg::Vec4 (0.0,0,0,1.0));
         }
 
         traverse(node, nodeVisit);
@@ -114,7 +115,7 @@ int main(int argc, char *argv[]) {
     lineGeode->addDrawable(linesGeom);
     lineGeode->getOrCreateStateSet()->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
 
-    root->addChild(lineGeode);
+    //root->addChild(lineGeode);
 
     root->setUpdateCallback(new IntersectCallback);
 
@@ -182,22 +183,63 @@ int main(int argc, char *argv[]) {
 
     //Add light to scene
     osg::ref_ptr<osg::LightSource> lightSource = new osg::LightSource();
+    osg::ref_ptr<osg::LightSource> lightSource2 = new osg::LightSource();
     //addLight(lightSource, 0 , osg::Vec4(45, 45, 45, 1.0) , osg::Vec4(0, 0, 0, 0), osg::Vec4(0.0f, 0.9f, 0.0f, 1.0), root_state );
-    root->addChild(lightSource); //add to root
+    //root->addChild(lightSource); //add to root
 
     //spotlight
     osg::ref_ptr<osg::Light> light = new osg::Light();
     light->setLightNum(0);
+    light->setPosition( osg::Vec4(-128,-128,100,1) );
+    light->setAmbient( osg::Vec4(0.0f, 0.1f, 0.2f, 1.0) );
+    light->setDiffuse( osg::Vec4(0.0f, 0.4f ,0.9, 1.0) );
+    light->setSpotCutoff(28.0);
+    light->setSpotExponent(5.0);
+    light->setDirection( osg::Vec3(1.0f, 1.0f, -1.0f) );
 
+    lightSource->setLight(light);
+    lightSource->setLocalStateSetModes(osg::StateAttribute::ON);
+    lightSource->setStateSetModes(*root_state, osg::StateAttribute::ON);
+
+    root->addChild(lightSource);
+
+    //ambient light
+    osg::ref_ptr<osg::Light> light2 = new osg::Light();
+    light2->setLightNum(1);
+    light2->setPosition( osg::Vec4(0.0f,0.0f,200.0f,1.0f) );
+    light2->setAmbient( osg::Vec4( 0.0f, 0.25f, 0.0f, 1.0f) );
+    light2->setDiffuse( osg::Vec4(0.0f, 0.5f, 0.4f, 1.0f) );
+    light2->setConstantAttenuation(1.0f);
+    light2->setLinearAttenuation(1.0f/128.0f);
+    //light2->setQuadraticAttenuation( 2.0f/osg::square(128.0f) );
+
+    lightSource2->setLight(light2);
+    lightSource2->setLocalStateSetModes(osg::StateAttribute::ON);
+    lightSource2->setStateSetModes(*root_state, osg::StateAttribute::ON);
+
+    root->addChild(lightSource2);
+
+    //bomb light
+    osg::ref_ptr<osg::Light> light3 = new osg::Light();
+    light3->setLightNum(2);
+    light3->setPosition( osg::Vec4(-50, 5, 25,1) );
+    light3->setAmbient( osg::Vec4(0, 0, 0, 0) );
+    light3->setDiffuse( osg::Vec4(0,0,0,0) );
+
+    lightSource3->setLight(light3);
+    lightSource3->setLocalStateSetModes( osg::StateAttribute::ON );
+    lightSource3->setStateSetModes( *root_state, osg::StateAttribute::ON );
+
+    root->addChild(lightSource3);
 
     //Add light 2 to scene
-    osg::ref_ptr<osg::LightSource> lightSource2 = new osg::LightSource();
+
     //addLight(lightSource2, 1 , osg::Vec4(200, 200, 200, 1.0) , osg::Vec4(0.0, 0, 0.2f, 1.0), osg::Vec4(0, 0, 0, 0), root_state );
-    root->addChild(lightSource2); //add too root
+    //root->addChild(lightSource2); //add too root
 
     //addLight(lightSource3, 0, osg::Vec4(0, 0, 0, 0), osg::Vec4(0.1, 0.1, 0.1, 1), osg::Vec4(0.5, 0.4, 0.4, 1.0) );
     //lightSource->getLight()->setLightNum(2);
-    root->addChild(lightSource3);
+    //root->addChild(lightSource3);
 
     //Optimizes the scene-graph
     osgUtil::Optimizer optimizer;
